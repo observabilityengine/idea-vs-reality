@@ -1,0 +1,10 @@
+{
+  "expo": {
+    "name": "Head Check",
+    "slug": "idea-vs-reality",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "scheme": "headcheck"
+  }
+}
