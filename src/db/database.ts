@@ -85,3 +85,8 @@ export async function listCompletedMemories(): Promise<Memory[]> {
   );
   return rows.map(rowToMemory);
 }
+
+/** Test-only hook for resetting the lazy database connection between isolated tests. */
+export function resetDatabaseForTests(): void {
+  databasePromise = null;
+}
