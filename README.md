@@ -2,223 +2,156 @@
 
 ## Product
 
-A private personal memory/reminder application built around one rule:
+Idea vs Reality is a consumer memory/reminder application designed for mass production and public distribution.
 
 > The app remembers what I need to remember so I don't have to.
 
-The primary experience is a single list. The user can immediately speak or type a memory. When a memory is completed by swipe, it disappears from the active list but remains in private completion history.
+The core experience is a simple list. A user can immediately speak or type something they need to remember. When a memory is completed by swipe, it disappears from the active list but remains in local completion history.
 
-This repository is authorized for this product only.
+The repository is authorized for this product only.
 
-## Architecture decision
+## Production repository tree
 
-This is a **real mobile application**, not a web prototype.
+The following is the planned production repository structure. The purpose of every application-controlled file is documented directly in the tree.
+
+```text
+idea-vs-reality/
+│
+├── .github/
+│   └── workflows/
+│       └── ci.yml
+│           Purpose: Automatically type-check and test every change.
+│
+├── assets/
+│   ├── icon.png
+│   │   Purpose: The Head Check app icon displayed on the device.
+│   │
+│   └── splash-icon.png
+│       Purpose: Minimal launch asset shown while the app starts.
+│
+├── src/
+│   │
+│   ├── components/
+│   │   ├── AddMemory.tsx
+│   │   │   Purpose: Accepts a memory by typing or speaking and submits it.
+│   │   │
+│   │   ├── MemoryItem.tsx
+│   │   │   Purpose: Displays one memory and handles swipe-to-complete.
+│   │   │
+│   │   └── MemoryList.tsx
+│   │       Purpose: Displays the user's active memories in their computed order.
+│   │
+│   ├── db/
+│   │   ├── database.ts
+│   │   │   Purpose: Reads and writes memories and completion history in SQLite.
+│   │   │
+│   │   └── migrations.ts
+│   │       Purpose: Creates and safely upgrades the local database schema.
+│   │
+│   ├── domain/
+│   │   ├── memory.ts
+│   │   │   Purpose: Defines the canonical memory data structure and rules.
+│   │   │
+│   │   ├── parser.ts
+│   │   │   Purpose: Interprets captured language into memory text and hidden metadata.
+│   │   │
+│   │   └── ordering.ts
+│   │       Purpose: Determines the quiet internal order of active memories.
+│   │
+│   ├── services/
+│   │   └── speech.ts
+│   │       Purpose: Provides the native speech-recognition interface to the app.
+│   │
+│   ├── theme/
+│   │   └── theme.ts
+│   │       Purpose: Defines the application's minimal visual design constants.
+│   │
+│   └── App.tsx
+│       Purpose: Connects the application pieces and provides the main screen.
+│
+├── tests/
+│   ├── database.test.ts
+│   │   Purpose: Verifies persistence, completion, history, and database behavior.
+│   │
+│   ├── parser.test.ts
+│   │   Purpose: Verifies dates, times, appointments, and internal instructions.
+│   │
+│   └── ordering.test.ts
+│       Purpose: Verifies appointment, important, and ordinary-memory ordering.
+│
+├── app.json
+│   Purpose: Configures the native iOS and Android application.
+│
+├── eas.json
+│   Purpose: Defines the development, testing, and production build configuration.
+│
+├── package.json
+│   Purpose: Defines the application dependencies and development commands.
+│
+├── package-lock.json
+│   Purpose: Locks the exact dependency tree used to build and test the application.
+│
+├── tsconfig.json
+│   Purpose: Defines the TypeScript compiler rules for the project.
+│
+├── .gitignore
+│   Purpose: Prevents generated files, secrets, and build artifacts from entering Git.
+│
+└── README.md
+    Purpose: Documents the product requirements, architecture, development process,
+             testing requirements, and production constraints.
+```
+
+The tree is a build plan. Files will be implemented and verified in dependency order rather than created with unverified placeholder code.
+
+## Architecture
+
+This is a real mobile application, not a web prototype.
 
 - React Native + Expo for iOS and Android.
 - TypeScript for compile-time safety.
 - SQLite through `expo-sqlite` for durable local storage.
-- Native speech recognition through `expo-speech-recognition`.
+- Native speech recognition through a compatible Expo speech-recognition package.
 - Native gesture handling for swipe-to-complete.
-- Deterministic rule-based parsing and ordering. No AI service is required for the core product.
+- Deterministic rule-based parsing and ordering for the core product.
 - EAS Build for reproducible distribution builds.
 
-The current Expo SDK and native-package versions must be selected as a mutually compatible set during implementation and locked in `package-lock.json`. No unverified version combination is to be assumed. Speech recognition must be verified on physical iOS and Android devices before release.
-
-`@react-native-voice/voice` is not an acceptable dependency: its repository was archived in January 2026 and directs users to `expo-speech-recognition`.
-
-## Production repository tree
-
-The previously proposed React/Vite tree is rejected. It was a web-prototype architecture.
-
-```text
-idea-vs-reality/
-├── .github/
-│   └── workflows/
-│       └── ci.yml
-├── assets/
-│   ├── icon.png
-│   └── splash-icon.png
-├── tests/
-│   ├── database.test.ts
-│   ├── ordering.test.ts
-│   └── parser.test.ts
-├── src/
-│   ├── components/
-│   │   ├── AddMemory.tsx
-│   │   ├── MemoryItem.tsx
-│   │   └── MemoryList.tsx
-│   ├── db/
-│   │   ├── database.ts
-│   │   └── migrations.ts
-│   ├── domain/
-│   │   ├── memory.ts
-│   │   ├── ordering.ts
-│   │   └── parser.ts
-│   ├── services/
-│   │   └── speech.ts
-│   ├── theme/
-│   │   └── theme.ts
-│   └── App.tsx
-├── .gitignore
-├── README.md
-├── app.json
-├── eas.json
-├── package-lock.json
-├── package.json
-└── tsconfig.json
-```
-
-These are the application-controlled files required for this architecture. Native `ios/` and `android/` directories are intentionally generated by Expo Continuous Native Generation and are not source-controlled in this repository.
-
-## File-by-file review
-
-### `.github/workflows/ci.yml`
-
-Runs automated checks on every relevant change. At minimum:
-
-- install from `package-lock.json`;
-- TypeScript type-check;
-- unit tests;
-- Expo project validation.
-
-### `assets/icon.png`
-
-The actual Head Check app icon shown on the device home screen and in app stores. It must be a valid square PNG; Expo recommends 1024×1024 for the source icon.
-
-### `assets/splash-icon.png`
-
-Minimal launch asset. It is not an onboarding or marketing screen.
-
-### `tests/parser.test.ts`
-
-Tests natural-language parsing, including dates, times, appointment detection, and removal of the internal `important` instruction from visible text.
-
-### `tests/ordering.test.ts`
-
-Tests appointment priority, explicit importance, ordinary task ordering, and stable fallback ordering.
-
-### `tests/database.test.ts`
-
-Tests schema creation, migrations, active-memory persistence, atomic completion, history persistence, and retention behavior.
-
-### `src/App.tsx`
-
-The application root and primary screen. There is no routing framework because the core product requires one primary user-facing destination.
-
-### `src/components/AddMemory.tsx`
-
-Immediate text and voice capture. It submits captured text directly into the domain parser and persistence layer without an unnecessary confirmation screen.
-
-### `src/components/MemoryItem.tsx`
-
-Displays one active memory and owns the swipe-to-complete interaction. Completion must persist before the item is considered gone from the active dataset.
-
-### `src/components/MemoryList.tsx`
-
-Loads and renders active memories in computed order. Appointments appear first. It renders only information useful to the user.
-
-### `src/db/database.ts`
-
-The only application layer responsible for SQLite reads and writes.
-
-The schema must retain, at minimum:
-
-- memory text;
-- active/completed state;
-- creation timestamp;
-- completion timestamp;
-- appointment date/time metadata;
-- internal importance flag;
-- internal ordering metadata;
-- history-retention metadata.
-
-All user-controlled SQL values must use bound parameters/prepared statements. SQL string concatenation with user input is prohibited.
-
-Completion should be implemented as an atomic database operation so a swipe cannot leave the same memory simultaneously active and completed.
-
-### `src/db/migrations.ts`
-
-Versioned database migrations. Existing user data must be migrated forward rather than deleted and recreated when the schema changes.
-
-### `src/domain/memory.ts`
-
-Canonical TypeScript domain types and invariants. UI components must not invent their own competing memory shape.
-
-### `src/domain/parser.ts`
-
-Converts natural-language input into structured internal metadata.
-
-Examples:
-
-```text
-Important — call Toby's Eats
-→ visible: Call Toby's Eats
-→ internal: important = true
-
-Doctor's appointment June 12th at 1 PM
-→ visible: Doctor's appointment
-→ internal: appointment date/time = parsed local date/time
-```
-
-Natural-language dates should use a maintained parser such as Chrono rather than fragile custom regular expressions. The parser must never invent a date or time. If a date/time cannot be established reliably, the memory remains an ordinary memory.
-
-### `src/domain/ordering.ts`
-
-Deterministic ordering rules:
-
-1. Appointments first.
-2. Explicitly important memories next.
-3. Ordinary memories using conservative task-time heuristics.
-4. Stable insertion order when there is insufficient evidence to infer a better position.
-
-The ordering is a memory aid. It is not a schedule the user is expected to follow.
-
-### `src/services/speech.ts`
-
-A narrow adapter around `expo-speech-recognition`. UI code must not depend directly on native speech APIs. This makes platform behavior easier to test and replace.
-
-Speech recognition requires native configuration and a development/custom build; it is not treated as an Expo Go-only feature.
-
-### `src/theme/theme.ts`
-
-Central visual constants for the minimal interface. React Native styles are sufficient; no CSS framework is required.
-
-### `app.json`
-
-Expo application configuration, including:
-
-- application name;
-- iOS bundle identifier;
-- Android application ID;
-- permissions;
-- native plugins;
-- app icon;
-- splash configuration;
-- platform settings.
-
-The Head Check icon is the actual device home-screen icon.
-
-### `eas.json`
-
-Development, internal/preview, and production build profiles. Production builds target normal App Store and Google Play distribution.
-
-### `package.json`
-
-Runtime and development dependencies and scripts for type checking, tests, validation, and builds.
-
-### `package-lock.json`
-
-Locks the complete dependency graph used by development and CI.
-
-### `tsconfig.json`
-
-TypeScript compiler configuration with strict checking enabled.
-
-## Data model behavior
+Exact dependency versions must be selected as a mutually compatible set and locked in `package-lock.json`. No dependency version is treated as verified merely because it appears in a proposed architecture.
+
+## Build order
+
+The implementation is intentionally file-by-file:
+
+1. `package.json`
+2. `package-lock.json`
+3. `tsconfig.json`
+4. `app.json`
+5. `eas.json`
+6. `src/domain/memory.ts`
+7. `src/db/migrations.ts`
+8. `src/db/database.ts`
+9. `tests/database.test.ts`
+10. `src/domain/parser.ts`
+11. `tests/parser.test.ts`
+12. `src/domain/ordering.ts`
+13. `tests/ordering.test.ts`
+14. `src/services/speech.ts`
+15. `src/theme/theme.ts`
+16. `src/components/AddMemory.tsx`
+17. `src/components/MemoryItem.tsx`
+18. `src/components/MemoryList.tsx`
+19. `src/App.tsx`
+20. `.github/workflows/ci.yml`
+21. `assets/icon.png`
+22. `assets/splash-icon.png`
+
+Each file must be checked against the actual repository and validated before proceeding to the next file.
+
+## Core behavior
 
 ### Active memories
 
-An active memory remains in the active list until completion.
+An active memory remains in the list until the user completes it.
 
 If it is not completed, it appears again on subsequent days. The app does not tell the user that it was carried forward.
 
@@ -228,77 +161,81 @@ Completion is not deletion.
 
 When the user swipes an item:
 
-1. Its completed state and completion timestamp are stored.
-2. It is removed from the active query.
-3. Its completed record remains locally available for later lookup.
+1. The completed state and completion timestamp are stored.
+2. The item is removed from the active list.
+3. The completed record remains locally available for later lookup.
 4. It is not displayed in the primary list.
-5. Old records may eventually be removed according to a defined retention policy.
+5. Automatic deletion must not occur until a retention period is explicitly defined.
 
-The exact retention period has **not** been specified yet. Therefore the implementation must not silently invent one. Automatic deletion must wait until the retention requirement is explicitly chosen.
+The retention period has not yet been specified. The implementation must not invent one.
 
 ### Appointments
 
-Appointments use hidden internal date/time metadata. There is no visible calendar.
+Appointments use hidden internal date/time metadata. The user never sees a calendar.
 
-Example behavior:
+Example:
 
 - June 11: `Doctor's appointment tomorrow`
 - June 12: `Doctor's appointment, 1 PM`
 
-Appointments always sort above ordinary memories. Once completed, they disappear from the active list and remain in completion history.
+Appointments appear at the top of the active list. Once completed, they disappear from the active list and remain in completion history.
 
-### Importance
+### Important
 
-The word `important` is an instruction to the application and never appears in the UI.
+If a user says `Important — call Toby's Eats`, `important` is an instruction to the application only.
+
+The active list shows:
+
+`Call Toby's Eats`
+
+The word `important` must never appear in the user-facing memory text.
+
+### Intelligent ordering
+
+The ordering system is an internal memory aid, not a schedule the user must obey.
+
+Examples:
+
+- `Make my bed.` → naturally early.
+- `Make dinner.` → naturally later.
+- `Walk Doji.` → sensible inferred position.
+- `Do my taxes.` → sensible position based on available evidence.
+
+If there is insufficient evidence to infer an order, the system must use a deterministic stable fallback rather than invent precision.
 
 ## User interface requirements
 
-The main screen is deliberately minimal:
+The primary experience is the list.
 
-- one list;
-- large readable text;
-- soft, low-contrast background;
-- generous spacing;
-- no numbering;
-- no bullets;
-- no checkboxes;
-- no checkmarks;
-- no categories;
-- no visible calendar;
-- no unnecessary scheduling information;
-- no motivational language;
-- no AI explanations;
-- no unfinished-task language;
-- no carried-forward language;
-- no guilt;
-- no productivity statistics;
-- no gamification.
+- Large, readable text.
+- Soft, low-contrast background.
+- Generous spacing.
+- No numbering.
+- No bullets.
+- No checkboxes.
+- No checkmarks.
+- No categories.
+- No visible calendar.
+- No unnecessary scheduling information.
+- No motivational language.
+- No AI explanations.
+- No unfinished-task language.
+- No carried-forward language.
+- No guilt.
+- No productivity statistics.
+- No gamification.
 
 The complicated reasoning belongs underneath the interface.
 
 ## Explicit non-goals
 
-Do not add:
+Do not add accounts, subscriptions, analytics, social features, monetization, onboarding, visible calendar UI, task statistics, gamification, AI explanations, nighttime list clearing, or backend/cloud storage for the core product unless those requirements are explicitly added later.
 
-- accounts;
-- subscriptions;
-- analytics;
-- social features;
-- monetization;
-- onboarding;
-- public product infrastructure;
-- visible calendar UI;
-- task statistics;
-- gamification;
-- AI explanations;
-- nighttime list clearing;
-- backend/cloud storage for the core product.
+## Local-first data model
 
-## Privacy model
+The initial product stores memories, hidden scheduling metadata, and completion history locally on the user's device. No account or server is required for the core experience.
 
-The initial architecture is local-first. Memory content, completion history, and hidden scheduling metadata remain on the device. No account or server is required for the core experience.
-
-Local storage is not automatically equivalent to encrypted storage. If stronger at-rest protection becomes a requirement, that must be designed and tested explicitly rather than assumed.
+Local storage must not be described as encrypted unless encryption is actually implemented and verified.
 
 ## Production verification
 
@@ -306,7 +243,7 @@ Before public distribution, physical iOS and Android testing is required for:
 
 - text capture;
 - voice capture;
-- microphone/speech permission denial;
+- speech/microphone permission denial;
 - swipe completion;
 - persistence after app termination and restart;
 - appointment parsing;
@@ -321,8 +258,4 @@ Before public distribution, physical iOS and Android testing is required for:
 - interrupted speech recognition;
 - offline operation of core memory functions.
 
-Compilation is not sufficient evidence of production correctness. Native behavior must be verified on both platforms.
-
-## Current repository state
-
-At the start of this review, the repository contained only `README.md` and `.gitignore`. There was no existing mobile application implementation to preserve. The original README described an unrelated startup-idea reality-check tool and has been replaced by this product specification.
+Compilation alone is not evidence of production correctness. Native behavior must be verified on both platforms.
