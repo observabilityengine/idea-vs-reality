@@ -6,6 +6,7 @@ import {
   stopSpeechRecognition,
   useSpeechRecognitionEvent,
 } from '../services/speech';
+import { MEMORY_LIMITS } from '../domain/validation';
 import { theme } from '../theme/theme';
 
 interface Props {
@@ -20,7 +21,7 @@ export function AddMemory({ onSubmit }: Props) {
   useSpeechRecognitionEvent('end', () => setListening(false));
   useSpeechRecognitionEvent('result', event => {
     const transcript = event.results[0]?.transcript ?? '';
-    if (transcript) setText(transcript);
+    if (transcript) setText(transcript.slice(0, MEMORY_LIMITS.maxTextLength));
     if (event.isFinal) setListening(false);
   });
   useSpeechRecognitionEvent('error', () => setListening(false));
@@ -45,13 +46,14 @@ export function AddMemory({ onSubmit }: Props) {
     <View style={styles.container}>
       <TextInput
         value={text}
-        onChangeText={setText}
+        onChangeText={value => setText(value.slice(0, MEMORY_LIMITS.maxTextLength))}
         onSubmitEditing={() => void submit()}
         placeholder="Remember..."
         placeholderTextColor={theme.colors.secondaryText}
         style={styles.input}
         returnKeyType="done"
         multiline
+        maxLength={MEMORY_LIMITS.maxTextLength}
         accessibilityLabel="Memory"
       />
       <View style={styles.actions}>
