@@ -38,7 +38,7 @@ const db = {
     row.completed_at = completedAt;
     return { changes: 1 };
   },
-  async withExclusiveTransactionAsync(callback: (tx: typeof db) => Promise<void>) {
+  async withExclusiveTransactionAsync(callback: (tx: any) => Promise<void>) {
     await callback(db);
   },
 };
