@@ -4,6 +4,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import type { Memory } from './domain/memory';
 import { orderMemories } from './domain/ordering';
 import { parseMemory } from './domain/parser';
+import { validateMemory } from './domain/validation';
 import { completeMemory, createMemory, listActiveMemories } from './db/database';
 import { AddMemory } from './components/AddMemory';
 import { MemoryList } from './components/MemoryList';
@@ -23,8 +24,9 @@ export default function App() {
 
   const addMemory = async (input: string) => {
     const parsed = parseMemory(input);
-    if (!parsed) return;
-    await createMemory(parsed);
+    const validated = parsed ? validateMemory(parsed) : null;
+    if (!validated) return;
+    await createMemory(validated);
     await refresh();
   };
 
