@@ -14,7 +14,15 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - run: npm install
+      - run: npm ci
       - run: npm run typecheck
       - run: npm test -- --runInBand
-      - run: npm run doctor
+      - run: npm run doctor -- --non-interactive
+      - name: Validate iOS Expo configuration
+        run: npx expo config --platform ios --type public
+      - name: Validate Android Expo configuration
+        run: npx expo config --platform android --type public
+      - name: Bundle iOS
+        run: npx expo export --platform ios
+      - name: Bundle Android
+        run: npx expo export --platform android
