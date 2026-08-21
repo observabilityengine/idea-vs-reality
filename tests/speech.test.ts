@@ -17,7 +17,7 @@ import {
 } from '../src/services/speech';
 
 describe('speech service', () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => jest.resetAllMocks());
 
   it('allows speech when permission is granted', async () => {
     mockModule.requestPermissionsAsync.mockResolvedValue({ granted: true });
