@@ -2,17 +2,20 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import {
   requestSpeechPermission,
+  SpeechError,
   startSpeechRecognition,
   stopSpeechRecognition,
   useSpeechRecognitionEvent,
 } from '../services/speech';
+import { MEMORY_LIMITS } from '../domain/validation';
 import { theme } from '../theme/theme';
 
 interface Props {
   onSubmit: (text: string) => Promise<void>;
+  onError?: (message: string) => void;
 }
 
-export function AddMemory({ onSubmit }: Props) {
+export function AddMemory({ onSubmit, onError }: Props) {
   const [text, setText] = useState('');
   const [listening, setListening] = useState(false);
 
@@ -20,38 +23,52 @@ export function AddMemory({ onSubmit }: Props) {
   useSpeechRecognitionEvent('end', () => setListening(false));
   useSpeechRecognitionEvent('result', event => {
     const transcript = event.results[0]?.transcript ?? '';
-    if (transcript) setText(transcript);
+    if (transcript) setText(transcript.slice(0, MEMORY_LIMITS.maxTextLength));
     if (event.isFinal) setListening(false);
   });
-  useSpeechRecognitionEvent('error', () => setListening(false));
+  useSpeechRecognitionEvent('error', event => {
+    setListening(false);
+    onError?.(`Speech recognition failed${event.error ? `: ${event.error}` : '.'}`);
+  });
 
   const submit = async () => {
     const value = text.trim();
     if (!value) return;
-    await onSubmit(value);
-    setText('');
+    try {
+      await onSubmit(value);
+      setText('');
+    } catch (error) {
+      onError?.(error instanceof Error ? error.message : 'Unable to save memory.');
+    }
   };
 
   const toggleVoice = async () => {
-    if (listening) {
-      stopSpeechRecognition();
-      return;
+    try {
+      if (listening) {
+        stopSpeechRecognition();
+        return;
+      }
+      await requestSpeechPermission();
+      startSpeechRecognition();
+    } catch (error) {
+      setListening(false);
+      if (error instanceof SpeechError) onError?.(error.message);
+      else onError?.('Unable to start speech recognition.');
     }
-    const granted = await requestSpeechPermission();
-    if (granted) startSpeechRecognition();
   };
 
   return (
     <View style={styles.container}>
       <TextInput
         value={text}
-        onChangeText={setText}
+        onChangeText={value => setText(value.slice(0, MEMORY_LIMITS.maxTextLength))}
         onSubmitEditing={() => void submit()}
         placeholder="Remember..."
         placeholderTextColor={theme.colors.secondaryText}
         style={styles.input}
         returnKeyType="done"
         multiline
+        maxLength={MEMORY_LIMITS.maxTextLength}
         accessibilityLabel="Memory"
       />
       <View style={styles.actions}>

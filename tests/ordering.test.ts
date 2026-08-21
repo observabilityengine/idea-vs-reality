@@ -30,4 +30,20 @@ describe('orderMemories', () => {
     ]);
     expect(result.map(item => item.id)).toEqual(['bed', 'dinner']);
   });
+
+  it('uses noon as the fallback for memories without scheduling metadata', () => {
+    const result = orderMemories([
+      memory({ id: 'late', inferredMinute: 13 * 60 }),
+      memory({ id: 'unscheduled' }),
+      memory({ id: 'early', inferredMinute: 11 * 60 }),
+    ]);
+    expect(result.map(item => item.id)).toEqual(['early', 'unscheduled', 'late']);
+  });
+
+  it('does not mutate the input array', () => {
+    const input = [memory({ id: 'b' }), memory({ id: 'a', isImportant: true })];
+    const original = input.map(item => item.id);
+    orderMemories(input);
+    expect(input.map(item => item.id)).toEqual(original);
+  });
 });
