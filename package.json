@@ -12,7 +12,6 @@
     "doctor": "expo-doctor"
   },
   "dependencies": {
-    "@react-native-async-storage/async-storage": "^2.2.0",
     "chrono-node": "2.10.1",
     "expo": "~56.0.12",
     "expo-speech-recognition": "56.0.1",
